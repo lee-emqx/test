@@ -88,26 +88,6 @@ typedef union {
 
 
 
-struct mosquitto;
-static struct will_delay_list *delay_list = NULL;
-
-struct mosquitto_opt {
-	char *key;
-	char *value;
-};
-
-struct mosquitto_auth_opt {
-	char *key;
-	char *value;
-};
-
-struct mosquitto_acl_msg {
-	const char *topic;
-	const void *payload;
-	long payloadlen;
-	int qos;
-	bool retain;
-};
 
 typedef unsigned char uint8_t;
 typedef unsigned short int uint16_t;
@@ -240,14 +220,33 @@ enum mosquitto_client_state {
 	mosq_cs_reauthenticating = 21, /* Client is undergoing reauthentication and shouldn't do anything else until complete */
 };
 
-
+struct mosquitto;
+static struct will_delay_list *delay_list = NULL;
 static struct session_expiry_list *expiry_list = NULL;
-
 struct session_expiry_list {
 	struct mosquitto *context;
 	struct session_expiry_list *prev;
 	struct session_expiry_list *next;
 };
+
+struct mosquitto_opt {
+	char *key;
+	char *value;
+};
+
+struct mosquitto_auth_opt {
+	char *key;
+	char *value;
+};
+
+struct mosquitto_acl_msg {
+	const char *topic;
+	const void *payload;
+	long payloadlen;
+	int qos;
+	bool retain;
+};
+
 
 struct mosquitto_message{
 	int mid;
@@ -521,20 +520,20 @@ struct mosquitto__listener {
 
 
 struct mosquitto_msg_data{
-//  #ifdef WITH_BROKER
+#ifdef WITH_BROKER
 	struct mosquitto_client_msg *inflight;
 	struct mosquitto_client_msg *queued;
 	unsigned long msg_bytes;
 	unsigned long msg_bytes12;
 	int msg_count;
 	int msg_count12;
-//  #else
-//  	struct mosquitto_message_all *inflight;
-//  	int queue_len;
-//  #  ifdef WITH_THREADING
-//  	pthread_mutex_t mutex;
-//  #  endif
-//  #endif
+#else
+	struct mosquitto_message_all *inflight;
+	int queue_len;
+#  ifdef WITH_THREADING
+	pthread_mutex_t mutex;
+#  endif
+#endif
 	int inflight_quota;
 	uint16_t inflight_maximum;
 };
@@ -547,12 +546,12 @@ struct mosquitto__subshared_ref {
 
 struct mosquitto {
 	mosq_sock_t sock;
-// #ifndef WITH_BROKER
+#ifndef WITH_BROKER
     mosq_sock_t sockpairR, sockpairW;
-// #endif
-//  #if defined(__GLIBC__) && defined(WITH_ADNS)
-//  	struct gaicb *adns; /* For getaddrinfo_a */
-//  #endif
+#endif
+#if defined(__GLIBC__) && defined(WITH_ADNS)
+	struct gaicb *adns; /* For getaddrinfo_a */
+#endif
 	enum mosquitto__protocol protocol;
 	char *address;
 	char *id;
@@ -780,10 +779,10 @@ struct mosquitto__config {
 //  	int websockets_headers_size;
 //  	bool have_websockets_listener;
 //  #endif
-//  #ifdef WITH_BRIDGE
-//  	struct mosquitto__bridge *bridges;
-//  	int bridge_count;
-//  #endif
+#ifdef WITH_BRIDGE
+	struct mosquitto__bridge *bridges;
+	int bridge_count;
+#endif
 	struct mosquitto__security_options security_options;
 };
 
@@ -795,31 +794,31 @@ struct mosquitto_db{
 	struct mosquitto *contexts_by_id;
 	struct mosquitto *contexts_by_sock;
 	struct mosquitto *contexts_for_free;
-//  #ifdef WITH_BRIDGE
-//  	struct mosquitto **bridges;
-//  #endif
-	//  struct clientid__index_hash *clientid_index_hash;
+#ifdef WITH_BRIDGE
+	struct mosquitto **bridges;
+#endif
+    struct clientid__index_hash *clientid_index_hash;
 	struct mosquitto_msg_store *msg_store;
 	struct mosquitto_msg_store_load *msg_store_load;
-//  #ifdef WITH_BRIDGE
-//  	int bridge_count;
-//  #endif
+#ifdef WITH_BRIDGE
+	int bridge_count;
+#endif
 	int msg_store_count;
 	unsigned long msg_store_bytes;
 	char *config_file;
 	struct mosquitto__config *config;
 	int auth_plugin_count;
 	bool verbose;
-//  #ifdef WITH_SYS_TREE
-//  	int subscription_count;
-//  	int shared_subscription_count;
-//  	int retained_count;
-//  #endif
+#ifdef WITH_SYS_TREE
+	int subscription_count;
+	int shared_subscription_count;
+	int retained_count;
+#endif
 	int persistence_changes;
 	struct mosquitto *ll_for_free;
-//  #ifdef WITH_EPOLL
-//  	int epollfd;
-//  #endif
+#ifdef WITH_EPOLL
+	int epollfd;
+#endif
 };
 
 
@@ -903,8 +902,7 @@ int property__read_all(int command, struct mosquitto__packet *packet,
         mosquitto_property **properties);
 
 
-static void property__add(mosquitto_property **proplist, struct mqtt5__property
-        *prop);
+static void property__add(mosquitto_property **proplist, struct mqtt5__property *prop);
 
 
 int mosquitto_property_add_byte(mosquitto_property **proplist, int identifier,
@@ -976,35 +974,4 @@ int packet__write(struct mosquitto *mosq);
 
 
 int packet__queue(struct mosquitto *mosq, struct mosquitto__packet *packet);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #endif
